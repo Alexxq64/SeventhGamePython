@@ -97,9 +97,10 @@ def save_tournaments_to_excel(base_url, file_path="D:\\Hobby\\SeventhGamePython\
         print(f"Ошибка! Нет прав на запись в файл '{file_path}'. Убедитесь, что файл не открыт и доступен для записи.")
 
 
-def save_tournament_matches_to_excel(tournament_url):
+
+def save_match_links_to_excel(tournament_url):
     """
-    Сохраняет список матчей турнира в Excel файл на второй лист, основываясь на переданном URL турнира.
+    Извлекает ссылки на матчи с заданной страницы турнира и сохраняет их в Excel файл.
 
     Параметры:
         tournament_url (str): URL страницы турнира.
@@ -115,62 +116,53 @@ def save_tournament_matches_to_excel(tournament_url):
     # Используем BeautifulSoup для парсинга HTML
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Находим все ссылки на матчи
-    match_links = soup.find_all("a", href=True)
+    # Находим все элементы матчей с классом "event__match"
+    match_elements = soup.find_all("div", class_="event__match")
 
-    # Открываем существующий Excel файл для записи
+    # Открываем существующий Excel файл или создаем новый
     file_path = "D:\\Hobby\\SeventhGamePython\\7thGame.xlsx"
     try:
         # Загружаем файл Excel
         wb = load_workbook(file_path) if os.path.exists(file_path) else Workbook()
-        ws = wb.create_sheet("Matches") if "Matches" not in wb.sheetnames else wb["Matches"]
+        ws = wb.create_sheet("MatchLinks") if "MatchLinks" not in wb.sheetnames else wb["MatchLinks"]
 
         # Заголовки
-        ws.cell(1, 1, "Название матча")
-        ws.cell(1, 2, "URL матча")
+        ws.cell(1, 1, "Ссылка на матч")
 
         row = 2
 
-        # Обрабатываем все ссылки на матчи
-        for link in match_links:
-            href = link['href']
-            
-            # Проверяем, содержит ли ссылка "/tennis/" и имеет ли она продолжение
-            if "/tennis/" in href and len(href) > len("/tennis/"):
-                # Формируем полный URL для матча
-                match_url = "https://www.livesport.com" + href if href.startswith("/") else href
+        # Обрабатываем каждый элемент матча
+        for match in match_elements:
+            # Находим тег <a> со ссылкой
+            link_tag = match.find("a", href=True, class_="eventRowLink")
+            if link_tag:
+                match_url = link_tag['href']
 
-                # Получаем название матча (текст ссылки)
-                match_name = link.get_text()
+                # Проверяем, является ли ссылка полной или относительной
+                if match_url.startswith("/"):
+                    match_url = "https://www.livesport.com" + match_url
 
-                # Записываем данные в Excel
-                ws.cell(row, 1, match_name)  
-                ws.cell(row, 2, match_url)
-
-                # Создаем гиперссылку в Excel
-                ws.cell(row, 2).hyperlink = match_url  
+                # Записываем ссылку в Excel
+                ws.cell(row, 1, match_url)
+                ws.cell(row, 1).hyperlink = match_url
 
                 # Переходим к следующей строке
                 row += 1
 
         # Автоподгонка ширины столбцов
-        for col in range(1, 3):
-            max_length = 0
-            column = get_column_letter(col)
-            for row in range(1, ws.max_row + 1):
-                cell_value = str(ws[f'{column}{row}'].value)
-                max_length = max(max_length, len(cell_value))
-            adjusted_width = max_length + 2
-            ws.column_dimensions[column].width = adjusted_width
+        column = get_column_letter(1)
+        max_length = max(len(str(ws[f'{column}{r}'].value)) for r in range(1, ws.max_row + 1))
+        ws.column_dimensions[column].width = max_length + 2
 
         # Сохраняем файл Excel
         wb.save(file_path)
 
         # Выводим сообщение об успехе
-        print(f"Данные о матчах сохранены на втором листе Excel по пути: {file_path}")
+        print(f"Ссылки на матчи сохранены в Excel файл по пути: {file_path}")
 
     except PermissionError:
         print(f"Ошибка! Файл '{file_path}' в данный момент открыт. Закройте файл и попробуйте снова.")
+
 # Основная функция
 def main():
     # Вызов функции с конкретным URL для турниров ATP
@@ -179,10 +171,9 @@ def main():
     # Вызов функции с конкретным URL для турниров WTA и другой путь для сохранения
     save_tournaments_to_excel("https://www.livesport.com/tennis/calendar/wta/", "D:\\Hobby\\SeventhGamePython\\7thGameWTA.xlsx")
 
-    tournament_url = "https://www.livesport.com/tennis/atp-singles/australian-open/results/"
+    tournament_url = "https://www.livesport.com/tennis/atp-singles/adelaide/results/"
+    save_match_links_to_excel(tournament_url)
 
-    # Вызов функции для сохранения матчей турнира в Excel
-    save_tournament_matches_to_excel(tournament_url)    
 
 # Блок для запуска main() только если файл запускается напрямую
 if __name__ == "__main__":
