@@ -165,12 +165,12 @@ def save_match_links_to_excel(tournament_url):
 
 # Основная функция
 def main():
-    # Вызов функции с конкретным URL для турниров ATP
-    save_tournaments_to_excel("https://www.livesport.com/tennis/calendar/atp/")
-    
-    # Вызов функции с конкретным URL для турниров WTA и другой путь для сохранения
-    save_tournaments_to_excel("https://www.livesport.com/tennis/calendar/wta/", "D:\\Hobby\\SeventhGamePython\\7thGameWTA.xlsx")
-
+    # # Вызов функции с конкретным URL для турниров ATP
+    # save_tournaments_to_excel("https://www.livesport.com/tennis/calendar/atp/")
+    #
+    # # Вызов функции с конкретным URL для турниров WTA и другой путь для сохранения
+    # save_tournaments_to_excel("https://www.livesport.com/tennis/calendar/wta/", "D:\\Hobby\\SeventhGamePython\\7thGameWTA.xlsx")
+    #
     tournament_url = "https://www.livesport.com/tennis/atp-singles/adelaide/results/"
     save_match_links_to_excel(tournament_url)
 
